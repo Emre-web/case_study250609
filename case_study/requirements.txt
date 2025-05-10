@@ -1,0 +1,11 @@
+pydantic~=2.10
+requests
+httpx==0.24.1
+selenium
+beautifulsoup4
+psycopg2  # PostgreSQL ile bağlantı için
+sqlalchemy  # ORM desteği
+apscheduler  # Cron-like zamanlama için
+fastapi  # API için (opsiyonel, bonus kısmı)
+uvicorn  # FastAPI için
+watchdog
