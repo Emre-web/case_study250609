@@ -10,6 +10,21 @@ jobs:
   run-scraper:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: case_study
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U user -d case_study"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
       # Step 1: Check out the repository
       - name: Checkout repository
@@ -18,9 +33,11 @@ jobs:
       # Step 2: Build the Docker image
       - name: Build Docker image
         run: |
-          docker build -t case_study .
+          docker build -t case_study -f case_study/Dockerfile case_study
 
       # Step 3: Run the scraper inside Docker
       - name: Run scraper
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/case_study
         run: |
           docker run --rm case_study
