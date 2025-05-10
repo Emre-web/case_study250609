@@ -8,20 +8,31 @@ from sqlalchemy import inspect  # Import inspect for table existence check
 from src.models.campground import Base, Campground, CampgroundORM  # Import CampgroundORM for validation
 from pydantic import ValidationError  # Import ValidationError for handling validation exceptions
 import html  # Import html module for escaping special characters
+import time  # Import time for retry logic
 
 DATABASE_URL = "postgresql://user:password@postgres:5432/case_study"  # Docker PostgreSQL bağlantısı
 
 def init_db():
     """
     Initialize the database and create tables if they do not exist.
+    Retry connection if the database is not ready.
     """
-    engine = create_engine(DATABASE_URL)
-    inspector = inspect(engine)  # Use inspect to check table existence
-    if not inspector.has_table("campgrounds"):  # Check if the table exists
-        Base.metadata.create_all(engine)  # Create tables only if they do not exist
-        print("Database initialized and tables created.")
-    else:
-        print("Database already initialized. Skipping table creation.")
+    retries = 5
+    while retries > 0:
+        try:
+            engine = create_engine(DATABASE_URL)
+            inspector = inspect(engine)
+            if not inspector.has_table("campgrounds"):
+                Base.metadata.create_all(engine)
+                print("Database initialized and tables created.")
+            else:
+                print("Database already initialized. Skipping table creation.")
+            return
+        except Exception as e:
+            print(f"Database connection failed: {e}. Retrying in 5 seconds...")
+            retries -= 1
+            time.sleep(5)
+    raise Exception("Failed to connect to the database after multiple retries.")
 
 def test_db_connection():
     """
