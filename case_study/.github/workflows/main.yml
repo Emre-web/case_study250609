@@ -1,18 +1,5 @@
 name: Scraper Cron Job
 
-
-# Database already initialized. Skipping table creation.
-# Total campgrounds available in API: 500
-# 1. --- Processing campground: Hocking Hills State Park ---
-# Step 1: Validating raw data...
-# Step 2: Validation successful.
-# Step 3: Saving to the database...
-# Step 4: Campground does not exist. Adding new record...
-# Step 5: New campground successfully added: Hocking Hills State Park
-# ...
-# All campgrounds have been processed.
-# Processed 500 out of 500 campgrounds.
-
 on:
   schedule:
     # Run the scraper every day at midnight (UTC)
@@ -31,7 +18,7 @@ jobs:
       # Step 2: Build the Docker image
       - name: Build Docker image
         run: |
-          docker build -t case_study -f case_study/Dockerfile case_study
+          docker build -t case_study .
 
       # Step 3: Run the scraper inside Docker
       - name: Run scraper
