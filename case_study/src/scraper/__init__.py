@@ -1,1 +1,1 @@
-# Empty __init__.py for scraper package
+from .scraper import run_scraper_job

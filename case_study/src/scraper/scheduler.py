@@ -1,5 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from src.scraper import run_scraper_job
+from src.scraper.scraper import run_scraper_job
 
 def start_scheduler():
     scheduler = BackgroundScheduler()

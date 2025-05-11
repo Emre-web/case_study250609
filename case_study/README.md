@@ -1,112 +1,174 @@
 # Case Study Scraper Projesi
 
 ## Proje Amacı
+
 Bu proje, belirli bir API'den kamp alanı verilerini çekip doğrulayan, veritabanına kaydeden ve tüm hata yönetimini profesyonel şekilde loglayan, Docker ve zamanlayıcı (APScheduler) ile tam uyumlu bir Python scraper uygulamasıdır.
 
 ---
 
-## Hızlı Başlangıç
+## Kapsam ve Özellikler
 
-### 1. Gereksinimler
+- API'den kamp alanı verisi çekme ve doğrulama
+- Veritabanına kayıt ve güncelleme (PostgreSQL, SQLAlchemy ORM)
+- Kapsamlı loglama (JSON formatında, seviyeli: DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- Sadece app.log dosyası kullanılır, tüm önemli olaylar ve hatalar burada tutulur
+- Zamanlayıcı ile otomatik veri çekme (APScheduler)
+- Docker ile kolay kurulum ve çalıştırma
+- Hata yönetimi: Ağ, veri ayrıştırma, zaman aşımı, geçersiz veri, doğrulama ve veritabanı hataları için özel loglama
+
+---
+
+## Klasör ve Dosya Yapısı
+
+```
+case_study/
+├── app.log                # Tüm loglar burada tutulur (JSON formatında)
+├── docker-compose.yml     # Docker servis tanımları
+├── Dockerfile             # Uygulama imajı
+├── main.py                # Ana uygulama ve zamanlayıcı başlatıcı
+├── requirements.txt       # Python bağımlılıkları
+├── logs/
+│   └── app.log            # Log dosyası (loglar buraya da yazılır)
+└── src/
+    ├── config.py          # Ortam ve uygulama ayarları
+    ├── utils/
+    │   ├── logger.py      # Loglama ve hata yönetimi
+    │   └── utils.py       # Yardımcı fonksiyonlar
+    ├── db/
+    │   ├── base.py        # SQLAlchemy base ve bağlantı
+    │   ├── db.py          # Veritabanı işlemleri (insert, update, init)
+    │   └── models.py      # ORM modelleri
+    ├── models/
+    │   └── campground.py  # Pydantic veri modeli ve doğrulama
+    ├── scraper/
+    │   ├── scraper.py     # API'den veri çekme ve işleme
+    │   ├── scheduler.py   # Zamanlayıcı fonksiyonları
+    │   └── updater.py     # (Geliştirilebilir) Güncelleyici fonksiyonlar
+    └── api/
+        └── endpoints.py   # (Opsiyonel) API endpointleri
+```
+
+---
+
+## Kurulum ve Çalıştırma
+
+### Gereksinimler
+
 - Docker ve Docker Compose
 - (Geliştirme için) Python 3.8+ ve pip
 
-### 2. Projeyi Çalıştırmak
+### Hızlı Başlangıç
 
-#### Standart Kullanım (Sadece zamanlanmış çalışır)
+#### 1. Docker ile Çalıştırma
+
 ```sh
 docker compose up --build
 ```
-- Scraper, APScheduler ile **her 2 dakikada bir** otomatik olarak çalışır.
-- Zamanlama aralığını kodda kolayca değiştirebilirsiniz (örn. gece 03:00 için `scheduler.add_job(..., 'cron', hour=3, minute=0)`).
 
-#### Hemen Çalıştırmak için (isteğe bağlı)
+- Scraper, APScheduler ile **her 2 dakikada bir** otomatik olarak çalışır.
+- Loglar `logs/app.log` ve kökteki `app.log` dosyalarına JSON formatında yazılır.
+
+#### 2. Hemen Çalıştırmak için
+
 ```sh
 docker compose run -e RUN_ON_STARTUP=true scraper
 ```
+
 veya docker-compose.yml dosyasındaki environment kısmına ekleyin:
+
 ```yaml
     environment:
       - RUN_ON_STARTUP=true
 ```
+
 - Bu şekilde başlatırsanız, scraper docker başlar başlamaz hemen çalışır, ardından zamanlayıcı ile otomatik çalışmaya devam eder.
 
----
+#### 3. Geliştirici Modunda (Lokal)
 
-## Proje Yapısı
-
-```
-case_study/
-├── app.log                # Tüm loglar burada tutulur
-├── docker-compose.yml     # Docker servis tanımları
-├── Dockerfile             # Uygulama imajı
-├── main.py                # Ana uygulama ve zamanlayıcı
-├── requirements.txt       # Python bağımlılıkları
-└── src/
-    └── models/
-        └── campground.py  # Kamp alanı veri modeli ve doğrulama
+```sh
+pip install -r requirements.txt
+python main.py
 ```
 
 ---
 
-## Ana Bileşenler ve Fonksiyonlar
+## Loglama Sistemi
+
+- Tüm loglar JSON formatında, `logs/app.log` ve kökteki `app.log` dosyalarına yazılır.
+- Log seviyeleri: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- Her logda: zaman, seviye, modül, fonksiyon adı, hata türü (errtype), mesaj ve varsa exception detayları bulunur.
+- Hata türleri: NETWORK_ERROR, DATA_PARSE_ERROR, TIMEOUT_ERROR, INVALID_DATA_ERROR, VALIDATION, DB, TYPE, HTTP, GENERIC, NO_ERROR
+- Hangi fonksiyonda hangi hata oluştuğu logda açıkça görünür.
+
+---
+
+## Ana Fonksiyonlar ve Amaçları
 
 ### main.py
-- **Logger**: Tüm loglar hem terminale hem de `app.log` dosyasına yazılır. Ortam, modül, hata türü ve seviye bilgisi içerir.
-- **APScheduler**: Zamanlayıcı ile scraper'ı belirli aralıklarla (örn. 2 dakika) veya cron ile (örn. gece 03:00) çalıştırır.
-- **RUN_ON_STARTUP**: ENV değişkeni ile docker başlar başlamaz scraper'ın hemen çalışmasını sağlar.
-- **retry_operation**: Tüm kritik işlemler için otomatik retry ve exponential backoff sağlar.
-- **handle_exception**: Tüm hata yönetimi merkezi olarak burada yapılır, log seviyeleri ve türleri ayrıdır.
-- **init_db**: Veritabanı bağlantısı ve tablo oluşturma işlemlerini yönetir, retry ile güvenli hale getirilmiştir.
-- **main**: API'den veri çeker, doğrular ve veritabanına kaydeder. Her çalıştırmada bir defa işini yapar.
-- **insert_campground_to_db**: Doğrulanmış kamp alanı verisini veritabanına ekler veya günceller.
-- **sanitize_data**: Verileri özel karakterlerden arındırır.
+
+- Uygulamanın giriş noktasıdır.
+- Zamanlayıcıyı başlatır ve loglamayı başlatır.
+- RUN_ON_STARTUP ile başlatılırsa scraper hemen çalışır.
+
+### src/scraper/scraper.py
+
+- `run_scraper_job`: API'den veri çeker, doğrular ve veritabanına kaydeder. Her çalıştırmada bir defa işini yapar.
+- API yanıt kodunu ve işlem süresini loglar.
+
+### src/scraper/scheduler.py
+
+- `start_scheduler`: APScheduler ile scraper'ı belirli aralıklarla (örn. 2 dakika) veya cron ile (örn. gece 03:00) çalıştırır.
+
+### src/db/db.py
+
+- `init_db`: Veritabanı bağlantısı ve tablo oluşturma işlemlerini yönetir, retry ile güvenli hale getirir.
+- `insert_campground_to_db`: Doğrulanmış kamp alanı verisini veritabanına ekler veya günceller.
 
 ### src/models/campground.py
-- **Campground**: Pydantic ile API'den gelen verinin doğrulamasını yapar.
-- **CampgroundORM**: SQLAlchemy ile veritabanı modelini tanımlar.
-- **prepare_data_for_db**: Doğrulanmış veriyi veritabanına uygun formata çevirir.
+
+- `Campground`: Pydantic ile API'den gelen verinin doğrulamasını yapar.
+- `CampgroundORM`: SQLAlchemy ile veritabanı modelini tanımlar.
+- `prepare_data_for_db`: Doğrulanmış veriyi veritabanına uygun formata çevirir.
+
+### src/utils/logger.py
+
+- Kapsamlı loglama ve hata yönetimi sağlar.
+- `handle_exception`: Tüm hata türlerini seviyeli ve fonksiyon adıyla birlikte loglar.
+- Özel hata türleri: NetworkError, DataParseError, TimeoutError, InvalidDataError, DatabaseException, ValidationException
+
+### src/utils/utils.py
+
+- `retry_operation`: Tüm kritik işlemler için otomatik retry ve exponential backoff sağlar.
+- `sanitize_data`: Verileri özel karakterlerden arındırır.
 
 ---
 
 ## Hata Yönetimi ve Loglama
-- Tüm hatalar (HTTP, veritabanı, doğrulama, veri tipi, bilinmeyen) `handle_exception` fonksiyonu ile merkezi olarak yönetilir.
-- Loglar hem terminalde hem de `app.log` dosyasında detaylı şekilde tutulur.
-- Her logda ortam, modül, hata türü ve seviye bilgisi bulunur.
 
----
-
-## Zamanlama Mantığı
-- APScheduler ile scraper belirli aralıklarla veya cron ifadesiyle çalışır.
-- Docker konteyneri sürekli açık kalır, zamanlayıcı arka planda bekler.
-- Kodun başında zamanlayıcı başlatılır, belirlenen zamanda scraper tetiklenir.
-- `RUN_ON_STARTUP=true` ile başlatırsan, docker başlar başlamaz scraper hemen çalışır.
-
----
-
-## Geliştirici Notları
-- Kodda sonsuz döngü yoktur, scraper her tetiklenmede bir defa işini yapar.
-- Zamanlama aralığını test için kısa (örn. 2 dakika), prod için cron (örn. gece 03:00) olarak ayarlayabilirsin.
-- Tüm loglar sadece `app.log` dosyasında ve terminalde tutulur, başka log dosyası yoktur.
-- ENV değişkenleri ile davranış kontrolü sağlanır.
+- Tüm hatalar (ağ, veri ayrıştırma, zaman aşımı, geçersiz veri, doğrulama, veritabanı, HTTP, tip, bilinmeyen) `handle_exception` fonksiyonu ile merkezi olarak yönetilir.
+- Loglarda fonksiyon adı ve hata türü açıkça görünür.
+- Hata olmayan loglarda errtype: NO_ERROR olarak yazılır.
 
 ---
 
 ## Sık Kullanılan Komutlar
 
 **Standart başlatma:**
+
 ```sh
 docker compose up --build
 ```
 
 **Hemen çalıştırmak için:**
+
 ```sh
 docker compose run -e RUN_ON_STARTUP=true scraper
 ```
 
 **Logları görmek için:**
+
 ```sh
-tail -f app.log
+tail -f logs/app.log
 ```
 
 ---
@@ -116,13 +178,14 @@ tail -f app.log
 - **Konteyner kapalıysa cron çalışır mı?**
   - Hayır, konteyner açık olmalı. Zamanlayıcı arka planda bekler.
 - **Zamanlamayı nasıl değiştiririm?**
-  - `main.py` içinde APScheduler satırında aralığı veya cron ifadesini değiştir.
+  - `src/scraper/scheduler.py` içinde APScheduler satırında aralığı veya cron ifadesini değiştir.
 - **Veritabanı bağlantısı veya HTTP hatalarında ne olur?**
   - Otomatik retry ve loglama ile hata yönetimi yapılır, tüm detaylar app.log'da tutulur.
 
 ---
 
 ## Katkı ve Geliştirme
+
 - Kodun tamamı PEP8 uyumlu ve sürdürülebilir şekilde yazılmıştır.
 - Yeni fonksiyonlar eklerken merkezi hata yönetimi ve loglama yapısını kullanmaya devam edin.
 - Zamanlama ve ENV değişkenleri ile davranış kontrolünü koruyun.
@@ -130,4 +193,5 @@ tail -f app.log
 ---
 
 ## İletişim
+
 Her türlü soru ve katkı için proje sahibiyle iletişime geçebilirsiniz.
