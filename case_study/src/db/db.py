@@ -15,7 +15,7 @@ def init_db():
         else:
             logger.info("Veritabanı zaten başlatılmış. Tablo oluşturma atlanıyor.")
         return True
-    from src.utils.utils import retry_operation
+    from src.utils import retry_operation
     try:
         retry_operation(
             op,
@@ -29,7 +29,7 @@ def init_db():
         raise DatabaseException("Birden fazla denemeden sonra veritabanına bağlanılamadı.")
 
 def insert_campground_to_db(session, validated_campground):
-    from src.utils.utils import sanitize_data
+    from src.utils import sanitize_data
     try:
         db_data = CampgroundORM.prepare_data_for_db(validated_campground)
         db_data = sanitize_data(db_data)
