@@ -19,8 +19,12 @@ services:
       - .:/app
     working_dir: /app
     command: sh -c "find . -name '*.pyc' -delete && watchmedo auto-restart --directory=/app --patterns=*.py --recursive -- python main.py"
+    # RUN_ON_STARTUP environment değişkeni ile scraper başlatılır başlatılmaz hemen çalışır.
+    # Kullanmak için aşağıdaki satırın başındaki # işaretini kaldırın veya terminalden -e RUN_ON_STARTUP=true ile çalıştırın.
+    # - RUN_ON_STARTUP=true
     environment:
       - DATABASE_URL=postgresql://user:password@postgres:5432/case_study
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
+      # - RUN_ON_STARTUP=true
     restart: on-failure

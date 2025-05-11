@@ -8,8 +8,8 @@ import logging
 
 # Configure logging for validation errors
 logging.basicConfig(
-    filename="validation_errors.log",
-    level=logging.ERROR,
+    filename="app.log",
+    level=logging.WARNING,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
@@ -82,8 +82,9 @@ class Campground(BaseModel):
             validated_data = cls(**raw_data)
             return validated_data
         except ValidationError as e:
-            logging.error(f"Validation failed for data: {raw_data}")
-            logging.error(f"Errors: {e.errors()}")
+            # Sadece ana logger kullanılacak, validation_errors.log'a log atılmayacak
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Validation failed for data: {raw_data} | Errors: {e.errors()}")
             raise e
 
 
@@ -153,7 +154,7 @@ if __name__ == "__main__":
             api_data = response.json()
         except ValueError:
             print("Error: API response is not valid JSON.")
-            logging.error("API response is not valid JSON.")
+            logging.warning("API response is not valid JSON.")
             api_data = []
 
         # Validate and save each campground in the API response
@@ -172,4 +173,4 @@ if __name__ == "__main__":
         print("\nAll campgrounds processed and saved successfully.")
     except requests.RequestException as e:
         print(f"Failed to fetch data from API: {e}")
-        logging.error(f"Failed to fetch data from API: {e}")
+        logging.warning(f"Failed to fetch data from API: {e}")

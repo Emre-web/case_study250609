@@ -13,6 +13,7 @@ import os
 import sys
 import logging
 from requests.exceptions import RequestException, HTTPError, Timeout, ConnectionError
+from apscheduler.schedulers.background import BackgroundScheduler
 
 DATABASE_URL = "postgresql://user:password@postgres:5432/case_study"
 
@@ -237,6 +238,26 @@ def main():
     finally:
         session.close()
 
+def run_scraper_job():
+    try:
+        init_db()
+        main()
+    except Exception as e:
+        handle_exception(e, context="run_scraper_job")
+
 if __name__ == "__main__":
-    init_db()
-    main()
+    # ENV: RUN_ON_STARTUP=true ise başlat, yoksa sadece zamanlayıcı bekler
+    RUN_ON_STARTUP = os.getenv("RUN_ON_STARTUP", "false").lower() == "true"
+    scheduler = BackgroundScheduler()
+    # Her 2 dakikada bir çalışacak şekilde ayarla
+    scheduler.add_job(run_scraper_job, 'interval', minutes=2)
+    scheduler.start()
+    logger.info("APScheduler başlatıldı. Scraper her 2 dakikada bir çalışacak.")
+    if RUN_ON_STARTUP:
+        logger.info("RUN_ON_STARTUP=true, scraper hemen başlatılıyor.")
+        run_scraper_job()
+    try:
+        while True:
+            time.sleep(60)
+    except (KeyboardInterrupt, SystemExit):
+        scheduler.shutdown()
