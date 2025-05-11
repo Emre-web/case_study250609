@@ -9,3 +9,5 @@ APScheduler  # Cron-like zamanlama için
 fastapi  # API için (opsiyonel, bonus kısmı)
 uvicorn  # FastAPI için
 watchdog
+apscheduler
+

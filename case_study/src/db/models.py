@@ -1,12 +1,62 @@
+from sqlalchemy import Column, String, Float, Boolean, Integer, DateTime, JSON
+from src.db.base import Base
+from pydantic import HttpUrl
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field, ValidationError, HttpUrl
 import logging
 
+class CampgroundORM(Base):
+    __tablename__ = "campgrounds"
+    id = Column(String, primary_key=True)
+    type = Column(String, nullable=False)
+    links = Column(JSON, nullable=True)
+    name = Column(String, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    region_name = Column(String, nullable=False)
+    administrative_area = Column(String, nullable=True)
+    nearest_city_name = Column(String, nullable=True)
+    accommodation_type_names = Column(JSON, nullable=False, default=[])
+    bookable = Column(Boolean, nullable=False, default=False)
+    camper_types = Column(JSON, nullable=False, default=[])
+    operator = Column(String, nullable=True)
+    photo_url = Column(String, nullable=True)
+    photo_urls = Column(JSON, nullable=False, default=[])
+    photos_count = Column(Integer, nullable=False, default=0)
+    rating = Column(Float, nullable=True)
+    reviews_count = Column(Integer, nullable=False, default=0)
+    slug = Column(String, nullable=True)
+    price_low = Column(Float, nullable=True)
+    price_high = Column(Float, nullable=True)
+    availability_updated_at = Column(DateTime, nullable=True)
+
+    @staticmethod
+    def prepare_data_for_db(validated_campground):
+        data = validated_campground.dict()
+        def convert_to_serializable(obj):
+            if isinstance(obj, HttpUrl):
+                return str(obj)
+            elif isinstance(obj, datetime):
+                return obj.isoformat()
+            elif isinstance(obj, dict):
+                return {k: convert_to_serializable(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_to_serializable(item) for item in obj]
+            return obj
+        data = convert_to_serializable(data)
+        return data
+
 class CampgroundLinks(BaseModel):
+    """
+    Links model to store the full JSON structure as-is.
+    """
     self: HttpUrl
 
 class Campground(BaseModel):
+    """
+    Base pydantic model, these are the required fields for parsing.
+    """
     id: str
     type: str
     links: CampgroundLinks
@@ -32,7 +82,6 @@ class Campground(BaseModel):
 
     @classmethod
     def validate_api_data(cls, raw_data: dict):
-        # Preprocessing: Ensure 'links' field is valid
         if "links" in raw_data and isinstance(raw_data["links"], dict):
             try:
                 raw_data["links"] = CampgroundLinks(**raw_data["links"])
