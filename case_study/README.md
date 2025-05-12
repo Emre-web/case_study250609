@@ -9,7 +9,8 @@ The application leverages FastAPI to provide a robust backend and a simple HTML/
 Key features include:
 
 -   **FastAPI Backend**: Serves a web interface and provides API endpoints to manage, trigger, and monitor scraping jobs.
-       ![id1](https://github.com/user-attachments/assets/fcd8755f-89f6-4cbe-b191-551ffa8e513e/id1.png)
+      
+       ![id1](https://github.com/user-attachments/assets/2a65938c-3de9-420c-a80d-cfe30080e6ed)
 
 )
 
