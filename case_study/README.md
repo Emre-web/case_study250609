@@ -9,7 +9,9 @@ The application leverages FastAPI to provide a robust backend and a simple HTML/
 Key features include:
 
 -   **FastAPI Backend**: Serves a web interface and provides API endpoints to manage, trigger, and monitor scraping jobs.
-      ![Uygulama Arayüzü](https://github.com/user-attachments/assets/64b489bc-b539-4573-b242-808c62a63688/id1.png)
+      ![image](https://user-images.githubusercontent.com/xxx/![id1](https://github.com/user-attachments/assets/fcd8755f-89f6-4cbe-b191-551ffa8e513e)
+)
+
 
 -   **Interactive Frontend**: A user-friendly interface built with HTML and JavaScript (served via `/static/index.html`) allows users to:
     -   Manually trigger the scraper.
