@@ -71,3 +71,11 @@ def run_scraper_job():
             pass
         execution_time = time.time() - start_time
         logger.info(f"Execution Time: {execution_time:.2f} saniye", extra={"component": "scraper_module", "function": "run_scraper_job"})
+
+        # İşlem sonunda bir özet mesajı döndür
+        if 'locations' in locals() and locations:
+            return f"{len(locations)} kamp alanı {execution_time:.2f} saniyede işlendi."
+        elif 'locations' in locals() and not locations:
+            return "API'den kamp alanı bulunamadı."
+        else:
+            return "Scraper çalıştı ancak veri işlenemedi. Detaylar için logları kontrol edin."

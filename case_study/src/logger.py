@@ -52,7 +52,7 @@ def archive_rotator(source, dest_unused):
             print(f"Error during app.log rotation: {e}", file=sys.stderr)
 
 # --- Handlers Setup ---
-JSON_DATEFMT = '%Y-%m-%d %H:%M:%S,%03d'
+JSON_DATEFMT = '%Y-%m-%d %H:%M:%S'
 
 # 1. Main App Log Handler with Archiving (logs/app.log)
 app_log_filepath = os.path.join(LOG_ROOT_DIR, "app.log")
@@ -116,3 +116,10 @@ def handle_exception(exc, context=None, extra_args=None):
     else:
         extra_info["errtype"] = "GENERIC_UNHANDLED_ERROR"
         logger.error(f"Bilinmeyen Bir Hata Oluştu ({type(exc).__name__}): {str(exc)}", exc_info=True, extra=extra_info)
+
+    # Eğer hata ValidationException değilse veya kritik bir HTTP/DB hatasıysa yeniden fırlat.
+    # Bu, _run_scraper_job_with_status'ın hatayı yakalamasını ve işi FAILED olarak işaretlemesini sağlar.
+    # ValidationException'lar genellikle tekil kayıtlarla ilgilidir ve işin tamamının başarısız olduğu anlamına gelmeyebilir.
+    # Ancak HTTP, Timeout, Connection, Database hataları veya diğer beklenmedik genel hatalar işin devamını engelleyebilir.
+    if not isinstance(exc, ValidationException):
+        raise exc

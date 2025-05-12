@@ -1,4 +1,8 @@
 import os
+from dotenv import load_dotenv
+
+# .env dosyasındaki değişkenleri yükle
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/case_study")
 API_URL = os.getenv("API_URL", "https://thedyrt.com/api/v6/locations/search-results?filter%5Bsearch%5D%5Bdrive_time%5D=any&filter%5Bsearch%5D%5Bair_quality%5D=any&filter%5Bsearch%5D%5Belectric_amperage%5D=any&filter%5Bsearch%5D%5Bmax_vehicle_length%5D=any&filter%5Bsearch%5D%5Bprice%5D=any&filter%5Bsearch%5D%5Brating%5D=any&filter%5Bsearch%5D%5Bbbox%5D=-118.001%2C24.942%2C-77.63%2C50.061&sort=recommended&page%5Bnumber%5D=1&page%5Bsize%5D=500")

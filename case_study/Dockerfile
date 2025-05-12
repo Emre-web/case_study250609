@@ -26,4 +26,5 @@ COPY . .
 RUN find . -name '*.pyc' -delete
 
 # Uygulamayı başlat ve dosya değişikliklerini izlemek için watchmedo kullan
-CMD ["sh", "-c", "find . -name '*.pyc' -delete && watchmedo auto-restart --directory=/app --patterns=*.py --recursive -- python main.py"]
+CMD ["sh", "-c", "find . -name '*.pyc' -delete && watchmedo auto-restart --directory=/app --patterns=*.py --recursive -- uvicorn src.main:app --host 0.0.0.0 --port 80"]
+# CMD ["sh", "-c", "find . -name '*.pyc' -delete && watchmedo auto-restart --directory=/app --patterns=*.py --recursive -- python main.py"] #eski hali, fastAPI kullanmadan öncesi
